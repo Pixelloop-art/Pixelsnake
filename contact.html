@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact — PixelLoop</title>
+  <meta name="theme-color" content="#0d0f15">
+  <style>
+    body{margin:0; padding:0; background:#0b0e14; color:#eaf2ff; font: 500 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue";}
+    .wrap{max-width:760px; margin:auto; padding:28px 18px;}
+    .card{background:linear-gradient(180deg, rgba(17,21,32,.92), rgba(17,21,32,.75)); border:1px solid rgba(108,240,255,.18); box-shadow:0 20px 60px rgba(0,0,0,.55); border-radius:20px; padding:24px;}
+    a{color:#6cf0ff}
+    h1{font-size:28px; margin:8px 0 12px}
+    label{display:block; margin:10px 0 6px; color:#cfe3ff}
+    input,textarea{
+      width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(108,240,255,.22);
+      background:#0c111b; color:#eaf2ff; outline:none;
+    }
+    textarea{min-height:140px; resize:vertical}
+    .btn{margin-top:12px; appearance:none; border:none; border-radius:12px; padding:10px 14px; font-weight:800; letter-spacing:.3px; cursor:pointer;
+      color:#071019; background: linear-gradient(180deg, #6cf0ff, #77f2ff);
+      box-shadow: 0 12px 24px rgba(109,240,255,.25), 0 0 0 1px rgba(108,240,255,.5) inset;
+    }
+    .note{color:#9bb3cc; font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Contact PixelLoop</h1>
+      <p class="note">Quickest way: email <a href="mailto:hello.pixelloop@gmail.com">hello.pixelloop@gmail.com</a></p>
+
+      <!-- Static email form (opens mail client). For a real form, later add Formspree/Netlify Forms. -->
+      <form action="mailto:hello.pixelloop@gmail.com" method="post" enctype="text/plain">
+        <label for="name">Your Name</label>
+        <input id="name" name="name" placeholder="Player One">
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com">
+
+        <label for="msg">Message</label>
+        <textarea id="msg" name="message" placeholder="Hey PixelLoop, I love the neon snake!"></textarea>
+
+        <button class="btn" type="submit">Send</button>
+      </form>
+
+      <p class="note" style="margin-top:10px"><a href="index.html">← Back to game</a></p>
+    </div>
+  </div>
+</body>
+</html>

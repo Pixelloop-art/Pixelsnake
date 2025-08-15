@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PixelLoop — Neon Snake</title>
+  <meta name="description" content="Play a sleek neon Snake game by PixelLoop. Simple, fast, and oddly addictive.">
+  <meta name="theme-color" content="#0d0f15">
+
+  <!-- ===== AdSense (paste your snippet below, before </head>) =====
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+       crossorigin="anonymous"></script>
+  ================================================================== -->
+
+  <style>
+    :root{
+      --bg:#0b0e14;           /* deep void */
+      --panel:#111520;        /* card bg */
+      --glow:#6cf0ff;         /* cyan glow */
+      --accent:#8a5cff;       /* purple accent */
+      --accent2:#00ffa6;      /* mint accent */
+      --text:#eaf2ff;         /* near-white */
+      --muted:#9bb3cc;        /* soft text */
+      --danger:#ff4d6d;       /* life loss */
+      --success:#35ff9f;      /* food */
+      --grid: 24;             /* px cell size (desktop) */
+    }
+    @media (max-width:700px){
+      :root{ --grid: 20; }
+    }
+
+    *{ box-sizing:border-box }
+    html,body{
+      margin:0; padding:0; background:radial-gradient(1200px 800px at 10% 0%, #0f1320 0%, #0b0e14 55%, #080a0f 100%) fixed;
+      color:var(--text); font: 500 16px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      min-height:100%;
+    }
+    a{ color:var(--glow); text-decoration:none }
+    a:hover{ text-decoration:underline }
+
+    .wrap{
+      display:grid; place-items:center; min-height:100dvh; padding: clamp(12px, 3vw, 32px);
+    }
+    .card{
+      width:min(980px, 96vw);
+      background:linear-gradient(180deg, rgba(17,21,32,.9), rgba(17,21,32,.7));
+      border:1px solid rgba(108,240,255,.2);
+      border-radius:24px;
+      box-shadow:
+        0 0 0 1px rgba(108,240,255,.1) inset,
+        0 20px 60px rgba(0,0,0,.55),
+        0 0 120px rgba(138,92,255,.15);
+      padding: clamp(16px, 3vw, 28px);
+      backdrop-filter: blur(6px);
+    }
+
+    .header{
+      display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      letter-spacing:.5px;
+    }
+    .logo{
+      width:38px; height:38px; border-radius:12px;
+      background: conic-gradient(from 180deg at 50% 50%, var(--glow), var(--accent), var(--accent2), var(--glow));
+      box-shadow: 0 0 28px rgba(108,240,255,.55), 0 0 10px rgba(138,92,255,.35) inset;
+      position:relative;
+    }
+    .logo::after{
+      content:""; position:absolute; inset:6px; border-radius:9px; background:#0c111b; box-shadow: 0 0 0 2px rgba(108,240,255,.5) inset;
+    }
+    .title{ font-size: clamp(18px, 3vw, 22px); font-weight:700 }
+    .subtitle{ color:var(--muted); font-size: clamp(12px, 2.2vw, 14px) }
+
+    .hud{
+      display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:flex-end;
+    }
+    .tag{
+      color:var(--muted); font-weight:600; font-size: 13px; border:1px solid rgba(108,240,255,.2);
+      padding:6px 10px; border-radius:999px; background: rgba(12,18,28,.6);
+    }
+
+    .stage{
+      display:grid; gap:16px; grid-template-columns: 1fr; justify-items:center;
+    }
+    canvas{
+      width:min(92vw, 720px);
+      aspect-ratio: 1 / 1;
+      image-rendering: pixelated;
+      border-radius:20px;
+      background:
+        radial-gradient(400px 280px at 25% 15%, rgba(138,92,255,.08), transparent 60%),
+        linear-gradient(180deg, #0f1522, #0c111b);
+      border:1px solid rgba(108,240,255,.22);
+      box-shadow: 0 10px 50px rgba(0,0,0,.55), 0 0 80px rgba(108,240,255,.1);
+    }
+
+    .controls{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center;
+      margin-top:4px;
+    }
+    .btn{
+      appearance:none; border:none; cursor:pointer; user-select:none;
+      padding:10px 14px; border-radius:12px;
+      color:#071019; font-weight:800; letter-spacing:.3px;
+      background: linear-gradient(180deg, var(--glow), #77f2ff);
+      box-shadow: 0 12px 24px rgba(109,240,255,.25), 0 0 0 1px rgba(108,240,255,.5) inset;
+      transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99) }
+    .btn.alt{
+      background: linear-gradient(180deg, var(--accent), #7a66ff);
+      color:#0b0e14;
+      box-shadow: 0 12px 24px rgba(138,92,255,.25), 0 0 0 1px rgba(138,92,255,.45) inset;
+    }
+
+    .stats{
+      display:flex; gap:16px; justify-content:center; color:var(--muted); font-weight:700;
+    }
+    .pill{
+      padding:6px 10px; border-radius:999px; background:rgba(12,18,28,.7);
+      border:1px solid rgba(108,240,255,.18);
+      box-shadow: 0 0 20px rgba(108,240,255,.1) inset;
+      color:var(--text);
+    }
+
+    .footer{
+      display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:18px;
+      color:var(--muted); font-size:13px;
+      border-top:1px dashed rgba(108,240,255,.18);
+      padding-top:14px;
+    }
+    .links{ display:flex; gap:14px; flex-wrap:wrap }
+    .heart{ color:var(--accent2) }
+
+    /* Mobile swipe hint */
+    .hint{ text-align:center; color:var(--muted); font-size:12px; margin-top:4px }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" role="main" aria-label="PixelLoop Neon Snake game">
+      <header class="header">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div class="title">PixelLoop</div>
+            <div class="subtitle">Neon Snake — zen arcade for quick dopamine (the healthy kind)</div>
+          </div>
+        </div>
+        <div class="hud">
+          <div class="tag">Arrow Keys / WASD</div>
+          <div class="tag">Swipe on Mobile</div>
+        </div>
+      </header>
+
+      <section class="stage">
+        <canvas id="board" width="600" height="600" aria-label="Game board" role="img"></canvas>
+
+        <div class="controls" aria-label="Game controls">
+          <button id="startBtn" class="btn" aria-label="Start game">Start</button>
+          <button id="restartBtn" class="btn alt" aria-label="Restart game">Restart</button>
+        </div>
+
+        <div class="stats">
+          <div class="pill">Score: <span id="score">0</span></div>
+          <div class="pill">High: <span id="best">0</span></div>
+          <div class="pill">Lives: <span id="lives">3</span></div>
+          <div class="pill">Speed: <span id="speed">1x</span></div>
+        </div>
+
+        <div class="hint">Tip: keep your streak to increase speed & score multiplier.</div>
+      </section>
+
+      <footer class="footer">
+        <div>© <span id="year"></span> <strong>PixelLoop</strong> · Built with <span class="heart">♥</span> for players everywhere</div>
+        <nav class="links" aria-label="Site links">
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="contact.html">Contact</a>
+        </nav>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // ====== Utility & State ======
+    const $ = (s)=>document.querySelector(s);
+    const board = $('#board');
+    const ctx = board.getContext('2d');
+    const grid = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--grid')) || 24;
+
+    // Fit canvas to an integer multiple of grid
+    function fitCanvas(){
+      const size = Math.min(board.clientWidth, board.clientHeight);
+      const cells = Math.floor(size / grid);
+      const px = cells * grid;
+      board.width = px; board.height = px;
+      cols = rows = cells;
+    }
+    let cols=25, rows=25; fitCanvas();
+    addEventListener('resize', fitCanvas);
+
+    // Game variables
+    let snake, dir, nextDir, food, running=false, lives=3, score=0, best=+localStorage.getItem('pl_best')||0;
+    let speed=7;        // base steps per second
+    let stepAccum=0;    // time accumulator
+    let last=0;
+    let mult=1;         // score multiplier grows with speed
+    let streak=0;
+
+    // UI bindings
+    const scoreEl=$('#score'), bestEl=$('#best'), livesEl=$('#lives'), speedEl=$('#speed');
+    bestEl.textContent = best;
+    $('#year').textContent = new Date().getFullYear();
+
+    // ====== Core ======
+    function reset(full=true){
+      const cx = Math.floor(cols/2), cy=Math.floor(rows/2);
+      snake = [{x:cx, y:cy},{x:cx-1,y:cy},{x:cx-2,y:cy}];
+      dir = {x:1,y:0}; nextDir = {x:1,y:0};
+      placeFood();
+      if(full){
+        lives = 3; score = 0; speed=7; mult=1; streak=0;
+      }
+      updateHUD();
+      draw(true);
+    }
+
+    function placeFood(){
+      while(true){
+        const f={ x:Math.floor(Math.random()*cols), y:Math.floor(Math.random()*rows) };
+        if(!snake.some(s=>s.x===f.x && s.y===f.y)){ food=f; return; }
+      }
+    }
+
+    function updateHUD(){
+      scoreEl.textContent=score;
+      bestEl.textContent=best;
+      livesEl.textContent=lives;
+      speedEl.textContent=(speed/7).toFixed(1)+'x';
+    }
+
+    function tick(dt){
+      if(!running) return;
+      stepAccum += dt;
+      const msPerStep = 1000/speed;
+      if(stepAccum >= msPerStep){
+        stepAccum %= msPerStep;
+        step();
+      }
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function loop(ts){
+      const dt = ts - last; last=ts;
+      tick(dt);
+    }
+
+    function step(){
+      // apply buffered dir
+      if((nextDir.x !== -dir.x) || (nextDir.y !== -dir.y)){ dir = nextDir; }
+
+      const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+      // wrap around walls for friendlier mobile play
+      head.x = (head.x+cols)%cols;
+      head.y = (head.y+rows)%rows;
+
+      // self-collision?
+      if(snake.some((s,i)=> i>0 && s.x===head.x && s.y===head.y)){
+        lives--;
+        flash('#ff4d6d');
+        if(lives<=0){
+          running=false;
+          gameOver();
+          return;
+        }else{
+          // soft reset but keep score/best
+          snake.unshift(head);
+          snake.pop();
+          streak=0; mult=Math.max(1, mult-0.5);
+          reset(false);
+          return;
+        }
+      }
+
+      snake.unshift(head);
+
+      // eat?
+      if(head.x===food.x && head.y===food.y){
+        score += Math.round(10*mult);
+        streak++;
+        if(streak%3===0){ speed = Math.min(18, speed+1); mult = Math.min(4, +(mult+0.2).toFixed(1)); }
+        placeFood();
+        pulse('#35ff9f');
+      }else{
+        snake.pop();
+      }
+
+      best = Math.max(best, score);
+      localStorage.setItem('pl_best', best);
+      updateHUD();
+    }
+
+    // ====== Draw ======
+    function draw(init=false){
+      const w=board.width, h=board.height;
+      // clear
+      ctx.clearRect(0,0,w,h);
+
+      // background grid glow
+      ctx.fillStyle = '#0c111b';
+      ctx.fillRect(0,0,w,h);
+
+      const cell = gridAtRuntime();
+      // soft grid lines
+      ctx.strokeStyle = 'rgba(108,240,255,.07)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for(let i=0;i<=cols;i++){ ctx.moveTo(i*cell,0); ctx.lineTo(i*cell,h); }
+      for(let j=0;j<=rows;j++){ ctx.moveTo(0,j*cell); ctx.lineTo(w,j*cell); }
+      ctx.stroke();
+
+      // food
+      glowRect(food.x*cell, food.y*cell, cell, cell, 'rgba(53,255,159,.9)', 12);
+
+      // snake
+      snake.forEach((p,i)=>{
+        const c = i===0 ? 'rgba(138,92,255,.95)' : 'rgba(108,240,255,.92)';
+        glowRect(p.x*cell, p.y*cell, cell, cell, c, i===0?18:10);
+      });
+
+      // start overlay
+      if(init || !running){
+        ctx.save();
+        ctx.fillStyle = 'rgba(11,14,20,.75)';
+        ctx.fillRect(0,0,w,h);
+        ctx.fillStyle='#eaf2ff';
+        ctx.font = `${Math.floor(w*0.06)}px ui-sans-serif`;
+        ctx.textAlign='center';
+        ctx.fillText('PixelLoop — Neon Snake', w/2, h*0.42);
+        ctx.fillStyle='#9bb3cc';
+        ctx.font = `${Math.floor(w*0.03)}px ui-sans-serif`;
+        ctx.fillText('Press Start or hit Space • Arrow Keys / WASD • Swipe on mobile', w/2, h*0.52);
+        ctx.restore();
+      }
+    }
+
+    function gridAtRuntime(){ return Math.floor(board.width/cols); }
+
+    function glowRect(x,y,w,h,color,blur=12){
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = blur;
+      ctx.fillStyle = color;
+      const pad = Math.floor(w*0.12);
+      ctx.fillRect(x+pad/2, y+pad/2, w-pad, h-pad);
+      ctx.restore();
+    }
+
+    function pulse(color){
+      board.animate([{boxShadow:'0 0 0 rgba(0,0,0,0)'},{boxShadow:`0 0 64px ${color}`}],{duration:180,iterations:1});
+    }
+    function flash(color){
+      board.animate([{filter:'none'},{filter:'brightness(2)'}],{duration:160,iterations:1});
+    }
+
+    // ====== Controls ======
+    addEventListener('keydown', e=>{
+      const k=e.key.toLowerCase();
+      if(k===' '){ if(!running){ start(); } else { /* could add pause */ } }
+      if(['arrowup','w'].includes(k)) nextDir={x:0,y:-1};
+      if(['arrowdown','s'].includes(k)) nextDir={x:0,y:1};
+      if(['arrowleft','a'].includes(k)) nextDir={x:-1,y:0};
+      if(['arrowright','d'].includes(k)) nextDir={x:1,y:0};
+    });
+
+    // Mobile swipe
+    let touchStart=null;
+    board.addEventListener('touchstart', e=>{ touchStart = [...e.touches][0]; }, {passive:true});
+    board.addEventListener('touchmove', e=>{
+      if(!touchStart) return;
+      const t=[...e.touches][0];
+      const dx=t.clientX - touchStart.clientX;
+      const dy=t.clientY - touchStart.clientY;
+      const ax=Math.abs(dx), ay=Math.abs(dy);
+      if(Math.max(ax,ay) > 18){
+        if(ax>ay) nextDir = {x: dx>0?1:-1, y:0};
+        else nextDir = {x:0, y: dy>0?1:-1};
+        touchStart=null;
+      }
+    }, {passive:true});
+
+    $('#startBtn').addEventListener('click', ()=> start());
+    $('#restartBtn').addEventListener('click', ()=> { lives=3; score=0; speed=7; mult=1; streak=0; start(true); });
+
+    function start(full=false){
+      if(full) reset(true); else reset(false);
+      running=true; last=performance.now(); requestAnimationFrame(loop);
+    }
+
+    // init
+    reset(true);
+  </script>
+</body>
+</html>
